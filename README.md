@@ -1,60 +1,68 @@
-# 🛒 E-Commerce Customer Retention & LTV Analytics Pipeline
+Markdown
+# 🛒 E-Commerce Customer Retention, LTV & ML Churn Analytics Pipeline
 
-An end-to-end modern data stack (MDS) implementation designed to analyze customer retention, Lifetime Value (LTV), and churn risk for European e-commerce platforms.
+An end-to-end modern data stack (MDS) implementation and machine learning analytics pipeline designed to analyze customer retention, Lifetime Value (LTV), and churn risk for European e-commerce platforms.
 
 ---
 
-## 📐 Architecture Overview
+## 🏗 Architecture Overview
 
 ```text
-[ Raw CSV / Data Source ]
-         │
-         ▼
-[ Python EDA & Analytics ] ──> Exploratory Data Analysis & Business Metrics
-         │
-         ▼
-[ dbt Data Pipeline ]
+[ Raw Data Sources (CSV) ]
+           │
+           ▼
+[ dbt Transformation Pipeline ]
    ├── Staging Layer (`stg_users`, `stg_orders`, `stg_order_items`)
-   └── Marts Layer (`dim_customers` - LTV & Churn Modeling)
+   └── Analytics Mart (`dim_customers_mart`)
+           │
+           ▼
+[ Machine Learning & Analytics Layer (Julius AI) ]
+   ├── RFM Customer Segmentation
+   └── Random Forest Churn Prediction Model (ROC-AUC: 0.8687)
+📊 Analytics & Machine Learning Insights
+1. Customer RFM Segmentation
+Active customers are segmented based on Recency, Frequency, and Monetary (RFM) metrics:
 
-🎯 Key Business Questions Addressed
-Customer Lifetime Value (LTV): How much revenue does each customer segment generate over time?
+Champions: Average LTV of ~$5,567 (Highest revenue drivers)
 
-Churn Risk Detection: Identifying customers who haven't ordered in the last 180 days.
+Loyal Customers: Average LTV of ~$4,572
 
-Regional Revenue Contribution: Analysis across core European markets (Germany, Netherlands, Switzerland, UK, Turkey).
+At Risk: Average LTV of ~$3,673
 
-📊 Business Key Performance Indicators (KPIs)
-Order Status: ~82.2% Completed | ~12.1% Returned | ~5.7% Cancelled
+Lost Customers: Average LTV of ~$1,950
 
-Top Revenue Markets:
+2. Machine Learning Churn Prediction
+A Random Forest Classifier was trained on customer behavior features to predict potential churn (is_churned defined as >180 days of inactivity).
 
-Germany (DE): ~$1.05M
+Model Performance (ROC-AUC Score): 0.8687
 
-Netherlands (NL): ~$772K
+Primary Churn Drivers:
 
-Switzerland (CH): ~$647K
+Lifetime Value (LTV): Lower monetary contribution strongly correlates with churn risk.
 
-Primary Acquisition Channels: Organic Search & Paid Search drive highest LTV.
+Age: Demographics impact long-term engagement.
 
-🛠️ Tech Stack & Tools
-SQL / dbt: Data transformation, dimensional modeling, and business logic materialization.
+Total Orders: Order frequency serves as a key retention indicator.
 
-Python (Pandas, Numpy, Faker): Synthetic transactional data generation and exploratory analysis.
+🛠 Tech Stack & Standards
+Data Transformation & Modeling: SQL, dbt (Data Build Tool)
 
-Modern Data Stack Standards: Modular SQL layering (Staging -> Marts).
+Data Engineering & Scripting: Python (Pandas, NumPy)
 
-🚀 How to Run Locally
-Activate Virtual Environment:
+Machine Learning & Visualization: Scikit-Learn, Seaborn, Julius AI
 
-Bash
+Version Control: Git, GitHub
+
+## 🚀 How to Run Locally
+
+### 1. Activate Virtual Environment
+```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-Generate Raw Datasets:
-
-Bash
+# On Windows:
+.\venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
 python generate_data.py
-Run Exploratory Data Analysis:
-
-Bash
+python export_mart_data.py
 python eda_analysis.py
+```
