@@ -1,4 +1,6 @@
 Markdown
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ecommerce-retention-analytics-2eyfdwkwncg2h4tmrpnzfp.streamlit.app/)
+
 # 🛒 E-Commerce Customer Retention, LTV & ML Churn Analytics Pipeline
 
 An end-to-end modern data stack (MDS) implementation and machine learning analytics pipeline designed to analyze customer retention, Lifetime Value (LTV), and churn risk for European e-commerce platforms.
