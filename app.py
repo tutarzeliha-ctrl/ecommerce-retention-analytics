@@ -1,101 +1,39 @@
-import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
-import streamlit as st
+import json
 
-# Page Configuration
-st.set_page_config(
-    page_title="E-Commerce Retention & Churn Analytics",
-    page_icon="🛒",
-    layout="wide",
-)
+print("="*50)
+print("🔄 REVERSE ETL PIPELINE STARTED")
+print("="*50)
 
-st.title("🛒 E-Commerce Retention, LTV & Churn Analytics Pipeline")
-st.markdown(
-    "An end-to-end Modern Data Stack (MDS) & Machine Learning solution for European e-commerce platforms."
-)
+# Load user and order datasets
+users = pd.read_csv('raw_users.csv')
+orders = pd.read_csv('raw_orders.csv')
 
-# Load Processed Data
-df = pd.read_csv("dim_customers_mart.csv")
+# Identify high-risk churn customers (Simulation: Longest time since last order)
+orders['order_date'] = pd.to_datetime(orders['order_date'])
+last_orders = orders.groupby('user_id')['order_date'].max().reset_index()
 
-# ---------------------------------------------------------
-# TOP METRICS (KPIs)
-# ---------------------------------------------------------
-col1, col2, col3, col4 = st.columns(4)
+# Select top 3 customers with oldest last order dates
+churn_risk_users = last_orders.sort_values(by='order_date').head(3)
+merged_risk = churn_risk_users.merge(users, on='user_id')
 
-total_customers = len(df)
-churn_rate = df["is_churned"].mean() * 100
-avg_ltv = df["lifetime_value_ltv"].mean()
-total_ltv = df["lifetime_value_ltv"].sum()
+print(f"\n🚨 {len(merged_risk)} High Churn Risk Customers Identified!\n")
 
-col1.metric("Total Customers", f"{total_customers:,}")
-col2.metric("Churn Rate", f"{churn_rate:.1f}%")
-col3.metric("Average LTV", f"€{avg_ltv:.2f}")
-col4.metric("Total LTV", f"€{total_ltv:,.2f}")
+# Outbound Webhook / Slack / CRM Notification Simulation
+for index, user in merged_risk.iterrows():
+    slack_payload = {
+        "channel": "#crm-churn-alerts",
+        "username": "RetentionBot",
+        "event": "HIGH_CHURN_RISK",
+        "data": {
+            "user_id": user['user_id'],
+            "country": user['country'],
+            "last_order": user['order_date'].strftime('%Y-%m-%d'),
+            "action_required": "Trigger 15% Win-back Discount Coupon"
+        }
+    }
+    print(f"📡 [Webhook Outbound] -> Slack/CRM: {json.dumps(slack_payload, ensure_ascii=False)}")
 
-st.divider()
-
-# ---------------------------------------------------------
-# CHARTS & ANALYTICS
-# ---------------------------------------------------------
-st.subheader("📊 Customer Distribution & ML Insights")
-
-left_col, right_col = st.columns(2)
-
-with left_col:
-    st.markdown("### Customers by Country")
-    country_counts = df["country"].value_counts().reset_index()
-    country_counts.columns = ["Country", "Count"]
-
-    fig1, ax1 = plt.subplots(figsize=(6, 4))
-    sns.barplot(
-        data=country_counts,
-        x="Country",
-        y="Count",
-        palette="viridis",
-        ax=ax1,
-        hue="Country",
-        legend=False,
-    )
-    ax1.set_ylabel("Number of Users")
-    st.pyplot(fig1)
-
-with right_col:
-    st.markdown("### Churn Status Breakdown")
-    churn_counts = (
-        df["is_churned"]
-        .map({0: "Active", 1: "Churned"})
-        .value_counts()
-        .reset_index()
-    )
-    churn_counts.columns = ["Status", "Count"]
-
-    fig2, ax2 = plt.subplots(figsize=(6, 4))
-    sns.barplot(
-        data=churn_counts,
-        x="Status",
-        y="Count",
-        palette="mako",
-        ax=ax2,
-        hue="Status",
-        legend=False,
-    )
-    ax2.set_ylabel("Number of Users")
-    st.pyplot(fig2)
-
-# ---------------------------------------------------------
-# DATA TABLE EXPLORER
-# ---------------------------------------------------------
-st.divider()
-st.subheader("🔍 Data Mart Explorer (`dim_customers_mart`)")
-
-selected_country = st.selectbox(
-    "Filter by Country:", ["All"] + list(df["country"].unique())
-)
-
-if selected_country != "All":
-    filtered_df = df[df["country"] == selected_country]
-else:
-    filtered_df = df
-
-st.dataframe(filtered_df, use_container_width=True)
+print("\n" + "="*50)
+print("✅ REVERSE ETL PIPELINE COMPLETED SUCCESSFULLY")
+print("="*50)
