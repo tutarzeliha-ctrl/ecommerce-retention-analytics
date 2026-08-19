@@ -1,5 +1,9 @@
 Markdown
 
+# 🛒 E-Commerce Retention & Churn Analytics
+
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ecommerce-retention-analytics-2eyfdwkvwncg2h4tmrpnzfp.streamlit.app/)
+
 ## 🚀 How to Run the Pipeline
 
 1. **Clone the repository:**
