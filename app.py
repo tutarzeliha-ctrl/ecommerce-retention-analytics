@@ -24,12 +24,17 @@ last_orders = orders.groupby('user_id')['order_date'].max().reset_index()
 churn_risk_users = last_orders.sort_values(by='order_date').head(3)
 merged_risk = churn_risk_users.merge(users, on='user_id')
 
-# UI Metrikleri
-col1, col2 = st.columns(2)
+# UI Metrikleri (4'lü şık sütun tasarımı)
+col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.metric(label="Total Users", value=len(users))
 with col2:
-    st.metric(label="High Churn Risk Customers", value=len(merged_risk))
+    st.metric(label="Total Orders", value=len(orders))
+with col3:
+    completed_orders = len(orders[orders['status'] == 'completed'])
+    st.metric(label="Completed Orders", value=completed_orders)
+with col4:
+    st.metric(label="High Churn Risk", value=len(merged_risk))
 
 st.markdown("---")
 st.markdown("### 🚨 Identified High-Risk Churn Customers")
@@ -45,7 +50,7 @@ for index, user in merged_risk.iterrows():
         "username": "RetentionBot",
         "event": "HIGH_CHURN_RISK",
         "data": {
-            "user_id": str(user['user_id']),  # Burada int yerine str yaptık!
+            "user_id": str(user['user_id']),
             "country": str(user['country']),
             "last_order": user['order_date'].strftime('%Y-%m-%d'),
             "action_required": "Trigger 15% Win-back Discount Coupon"
