@@ -1,4 +1,11 @@
 Markdown
+## 🚀 How to Run the Pipeline
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/tutarzeliha-ctrl/ecommerce-retention-analytics.git](https://github.com/tutarzeliha-ctrl/ecommerce-retention-analytics.git)
+   cd ecommerce-retention-analytics
+   
 # 🛒 E-Commerce Retention & Churn Analytics Pipeline
 
 An end-to-end modern data engineering solution designed to model raw e-commerce data, evaluate retention metrics, and trigger automated Reverse ETL churn alerts.
