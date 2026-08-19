@@ -5,15 +5,16 @@ An end-to-end modern data engineering solution designed to model raw e-commerce 
 
 ---
 
-## 🏗️ Architecture & Data Flow
+## ## 🏗️ Architecture & Data Flow
 
-[Raw CSV / Synthetic Data]
-│
-▼
-[Google BigQuery] ──► [dbt Core (Staging & Marts)] ──► [dbt Tests (6/6 PASS)]
-│
-▼
-[Reverse ETL / Webhook Alerts]
+```text
+[Raw CSV / Synthetic Data] 
+            │
+            ▼
+   [Google BigQuery] ──► [dbt Core (Staging & Marts)] ──► [dbt Tests (6/6 PASS)]
+                                      │
+                                      ▼
+                        [Reverse ETL / Webhook Alerts]
 
 
 ---
