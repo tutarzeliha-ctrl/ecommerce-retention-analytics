@@ -1,55 +1,82 @@
-import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
 # Load raw datasets
-users = pd.read_csv("raw_users.csv")
-products = pd.read_csv("raw_products.csv")
-orders = pd.read_csv("raw_orders.csv")
-order_items = pd.read_csv("raw_order_items.csv")
+users_df = pd.read_csv("raw_users.csv")
+products_df = pd.read_csv("raw_products.csv")
+orders_df = pd.read_csv("raw_orders.csv")
+order_items_df = pd.read_csv("raw_order_items.csv")
 
-print("--- 1. OVERALL BUSINESS METRICS ---")
-# Merge order items with products to get revenue and cost
-df_items = order_items.merge(products, on="product_id", how="left")
-df_items["gross_revenue"] = (
-    df_items["quantity"] * df_items["unit_price_x"] * (1 - df_items["discount"])
-)
-df_items["total_cost"] = df_items["quantity"] * df_items["unit_cost"]
+# 1. Calculate Key Performance Indicators (KPIs)
+# Merge orders with items to get total revenue
+merged_orders = order_items_df.merge(orders_df, on="order_id")
+merged_orders["item_total"] = merged_orders["quantity"] * merged_orders[
+    "unit_price"
+] * (1 - merged_orders["discount"])
 
-# Merge with orders to filter completed orders for metrics
-df_full = df_items.merge(orders, on="order_id", how="left").merge(
-    users, on="user_id", how="left"
-)
+completed_orders = merged_orders[merged_orders["status"] == "completed"]
 
-completed_orders = df_full[df_full["status"] == "completed"]
-
-total_revenue = completed_orders["gross_revenue"].sum()
-total_cost = completed_orders["total_cost"].sum()
-net_profit = total_revenue - total_cost
-profit_margin = (net_profit / total_revenue) * 100
-total_orders_count = orders[orders["status"] == "completed"][
+total_revenue = round(completed_orders["item_total"].sum(), 2)
+total_completed_orders_count = orders_df[orders_df["status"] == "completed"][
     "order_id"
 ].nunique()
-aov = total_revenue / total_orders_count
+aov = round(total_revenue / total_completed_orders_count, 2)
 
-print(f"Total Gross Revenue: ${total_revenue:,.2f}")
-print(f"Net Profit: ${net_profit:,.2f} (Margin: {profit_margin:.1f}%)")
-print(f"Completed Orders: {total_orders_count}")
-print(f"Average Order Value (AOV): ${aov:.2f}\n")
+print("\n==========================================")
+print("📊 KEY PERFORMANCE INDICATORS (KPIs)")
+print("==========================================")
+print(f"Total Revenue (Completed Orders): €{total_revenue:,.2f}")
+print(f"Average Order Value (AOV): €{aov:,.2f}")
+print(f"Total Completed Orders: {total_completed_orders_count}")
 
-print("--- 2. ORDER STATUS BREAKDOWN ---")
-status_breakdown = orders["status"].value_counts(normalize=True) * 100
-print(status_breakdown.round(2).to_string() + "%\n")
+# Order Status Breakdown
+status_dist = orders_df["status"].value_counts(normalize=True) * 100
+print("\nOrder Status Distribution (%):")
+for status, pct in status_dist.items():
+    print(f"  - {status.capitalize()}: {pct:.1f}%")
 
-print("--- 3. REVENUE BY COUNTRY ---")
-country_revenue = (
-    completed_orders.groupby("country")["gross_revenue"].sum().sort_values(ascending=False)
+# 2. Customer Demographics
+print("\n==========================================")
+print("🌍 USER DEMOGRAPHICS SUMMARY")
+print("==========================================")
+country_dist = users_df["country"].value_counts()
+print("Users by Country:")
+for country, count in country_dist.items():
+    print(f"  - {country}: {count} users")
+
+# 3. Generate Visualizations
+plt.style.use("seaborn-v0_8-whitegrid" if "seaborn-v0_8-whitegrid" in plt.style.available else "default")
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# Plot 1: User Distribution by Country
+sns.barplot(
+    x=country_dist.index,
+    y=country_dist.values,
+    ax=axes[0],
+    palette="viridis",
+    hue=country_dist.index,
+    legend=False,
 )
-print(country_revenue.round(2).to_string() + "\n")
+axes[0].set_title("User Distribution by Target Country", fontsize=12, fontweight="bold")
+axes[0].set_xlabel("Country Code")
+axes[0].set_ylabel("Number of Users")
 
-print("--- 4. REVENUE BY ACQUISITION CHANNEL ---")
-channel_revenue = (
-    completed_orders.groupby("acquisition_channel")["gross_revenue"]
-    .sum()
-    .sort_values(ascending=False)
+# Plot 2: Revenue by Category
+category_revenue = completed_orders.merge(products_df, on="product_id").groupby("category")["item_total"].sum().reset_index()
+sns.barplot(
+    data=category_revenue,
+    x="item_total",
+    y="category",
+    ax=axes[1],
+    palette="mako",
+    hue="category",
+    legend=False,
 )
-print(channel_revenue.round(2).to_string())
+axes[1].set_title("Total Revenue by Product Category (€)", fontsize=12, fontweight="bold")
+axes[1].set_xlabel("Total Revenue (€)")
+axes[1].set_ylabel("Category")
+
+plt.tight_layout()
+plt.savefig("assets/eda_summary_charts.png")
+print("\n✅ EDA Completed! Visualizations saved to 'assets/eda_summary_charts.png'.")

@@ -1,76 +1,101 @@
-import streamlit as st
+import matplotlib.pyplot as plt
 import pandas as pd
-import plotly.express as px
+import seaborn as sns
+import streamlit as st
 
+# Page Configuration
 st.set_page_config(
     page_title="E-Commerce Retention & Churn Analytics",
-    page_icon="📊",
-    layout="wide"
+    page_icon="🛒",
+    layout="wide",
 )
 
-st.title("📊 E-Commerce Customer Retention & Churn Analytics")
-st.markdown("Modern Data Stack (dbt + Python + ML) Interactive Dashboard")
-
-# Load Mock Datamart Data
-@st.cache_data
-def load_data():
-    data = {
-        "customer_id": [101, 102, 103, 104, 105, 106, 107, 108],
-        "age": [29, 42, 35, 50, 23, 31, 45, 38],
-        "total_orders": [12, 2, 15, 1, 8, 3, 20, 4],
-        "lifetime_value_ltv": [5200, 450, 6800, 120, 2900, 890, 8100, 1100],
-        "rfm_segment": ["Champions", "At Risk", "Champions", "Lost", "Loyal Customers", "At Risk", "Champions", "Loyal Customers"],
-        "churn_probability": [0.05, 0.82, 0.03, 0.95, 0.20, 0.75, 0.02, 0.40]
-    }
-    return pd.DataFrame(data)
-
-df = load_data()
-
-# Sidebar Filters
-st.sidebar.header("🎯 Filter Options")
-selected_segment = st.sidebar.multiselect(
-    "Select RFM Segment:",
-    options=df["rfm_segment"].unique(),
-    default=df["rfm_segment"].unique()
+st.title("🛒 E-Commerce Retention, LTV & Churn Analytics Pipeline")
+st.markdown(
+    "An end-to-end Modern Data Stack (MDS) & Machine Learning solution for European e-commerce platforms."
 )
 
-filtered_df = df[df["rfm_segment"].isin(selected_segment)]
+# Load Processed Data
+df = pd.read_csv("dim_customers_mart.csv")
 
-# Key Metrics
+# ---------------------------------------------------------
+# TOP METRICS (KPIs)
+# ---------------------------------------------------------
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Total Customers", len(filtered_df))
-col2.metric("Avg Lifetime Value ($)", f"${filtered_df['lifetime_value_ltv'].mean():,.2f}" if len(filtered_df) > 0 else "$0")
-col3.metric("Avg Orders", f"{filtered_df['total_orders'].mean():.1f}" if len(filtered_df) > 0 else "0")
-col4.metric("Avg Churn Risk", f"{filtered_df['churn_probability'].mean()*100:.1f}%" if len(filtered_df) > 0 else "0%")
+
+total_customers = len(df)
+churn_rate = df["is_churned"].mean() * 100
+avg_ltv = df["lifetime_value_ltv"].mean()
+total_ltv = df["lifetime_value_ltv"].sum()
+
+col1.metric("Total Customers", f"{total_customers:,}")
+col2.metric("Churn Rate", f"{churn_rate:.1f}%")
+col3.metric("Average LTV", f"€{avg_ltv:.2f}")
+col4.metric("Total LTV", f"€{total_ltv:,.2f}")
 
 st.divider()
 
-# Charts Section
-col_left, col_right = st.columns(2)
+# ---------------------------------------------------------
+# CHARTS & ANALYTICS
+# ---------------------------------------------------------
+st.subheader("📊 Customer Distribution & ML Insights")
 
-with col_left:
-    st.subheader("📈 LTV Distribution by Segment")
-    fig_ltv = px.bar(
-        filtered_df, 
-        x="rfm_segment", 
-        y="lifetime_value_ltv", 
-        color="rfm_segment",
-        title="Average LTV per RFM Segment"
+left_col, right_col = st.columns(2)
+
+with left_col:
+    st.markdown("### Customers by Country")
+    country_counts = df["country"].value_counts().reset_index()
+    country_counts.columns = ["Country", "Count"]
+
+    fig1, ax1 = plt.subplots(figsize=(6, 4))
+    sns.barplot(
+        data=country_counts,
+        x="Country",
+        y="Count",
+        palette="viridis",
+        ax=ax1,
+        hue="Country",
+        legend=False,
     )
-    st.plotly_chart(fig_ltv, use_container_width=True)
+    ax1.set_ylabel("Number of Users")
+    st.pyplot(fig1)
 
-with col_right:
-    st.subheader("⚠️ Churn Probability vs Total Orders")
-    fig_churn = px.scatter(
-        filtered_df, 
-        x="total_orders", 
-        y="churn_probability", 
-        color="rfm_segment",
-        size="lifetime_value_ltv",
-        hover_data=["customer_id"]
+with right_col:
+    st.markdown("### Churn Status Breakdown")
+    churn_counts = (
+        df["is_churned"]
+        .map({0: "Active", 1: "Churned"})
+        .value_counts()
+        .reset_index()
     )
-    st.plotly_chart(fig_churn, use_container_width=True)
+    churn_counts.columns = ["Status", "Count"]
 
-# Data Table
-st.subheader("📋 Customer Data Mart Explorer")
+    fig2, ax2 = plt.subplots(figsize=(6, 4))
+    sns.barplot(
+        data=churn_counts,
+        x="Status",
+        y="Count",
+        palette="mako",
+        ax=ax2,
+        hue="Status",
+        legend=False,
+    )
+    ax2.set_ylabel("Number of Users")
+    st.pyplot(fig2)
+
+# ---------------------------------------------------------
+# DATA TABLE EXPLORER
+# ---------------------------------------------------------
+st.divider()
+st.subheader("🔍 Data Mart Explorer (`dim_customers_mart`)")
+
+selected_country = st.selectbox(
+    "Filter by Country:", ["All"] + list(df["country"].unique())
+)
+
+if selected_country != "All":
+    filtered_df = df[df["country"] == selected_country]
+else:
+    filtered_df = df
+
 st.dataframe(filtered_df, use_container_width=True)

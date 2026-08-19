@@ -1,46 +1,58 @@
 import pandas as pd
 import numpy as np
 
-# 1. Load raw datasets
-users = pd.read_csv('raw_users.csv')
-orders = pd.read_csv('raw_orders.csv')
-order_items = pd.read_csv('raw_order_items.csv')
+# Load Raw Data
+users_df = pd.read_csv("raw_users.csv")
+orders_df = pd.read_csv("raw_orders.csv")
+order_items_df = pd.read_csv("raw_order_items.csv")
+products_df = pd.read_csv("raw_products.csv")
 
-# 2. Filter completed orders
-completed_orders = orders[orders['status'] == 'completed'].copy()
-completed_orders['order_date'] = pd.to_datetime(completed_orders['order_date'])
+# ---------------------------------------------------------
+# STAGING LAYER SIMULATION (dbt Models)
+# ---------------------------------------------------------
+# 1. stg_users
+stg_users = users_df.copy()
 
-# 3. Calculate gross revenue per line item
-order_items['gross_revenue'] = (
-    order_items['quantity'] * order_items['unit_price'] * (1 - order_items['discount'])
-)
-order_revenue = order_items.groupby('order_id')['gross_revenue'].sum().reset_index()
+# 2. stg_orders & stg_order_items (Calculate total per order item)
+order_items_df["item_revenue"] = order_items_df["quantity"] * order_items_df["unit_price"] * (1 - order_items_df["discount"])
+completed_orders = orders_df[orders_df["status"] == "completed"]
 
-# 4. Merge completed orders with revenue details
-orders_with_revenue = pd.merge(completed_orders, order_revenue, on='order_id', how='left')
+# Join completed items with orders
+completed_items = order_items_df.merge(completed_orders, on="order_id")
 
-# 5. Aggregate customer-level metrics (dbt dim_customers logic)
-customer_metrics = orders_with_revenue.groupby('user_id').agg(
-    total_orders=('order_id', 'nunique'),
-    first_order_at=('order_date', 'min'),
-    most_recent_order_at=('order_date', 'max'),
-    lifetime_value_ltv=('gross_revenue', 'sum')
+# ---------------------------------------------------------
+# MARTS LAYER SIMULATION (dim_customers.sql)
+# ---------------------------------------------------------
+# Calculate aggregated customer metrics
+user_metrics = completed_items.groupby("user_id").agg(
+    total_orders=("order_id", "nunique"),
+    lifetime_value_ltv=("item_revenue", "sum"),
+    last_order_date=("order_date", "max"),
+    first_order_date=("order_date", "min")
 ).reset_index()
 
-# 6. Combine with user master records
-customer_mart = pd.merge(users, customer_metrics, on='user_id', how='left')
-customer_mart['total_orders'] = customer_mart['total_orders'].fillna(0)
-customer_mart['lifetime_value_ltv'] = customer_mart['lifetime_value_ltv'].fillna(0)
+# Merge with all users to keep user-level profile
+dim_customers = stg_users.merge(user_metrics, on="user_id", how="left")
 
-# 7. Calculate Recency (days since most recent order)
-max_date = pd.to_datetime(orders['order_date']).max()
-customer_mart['recency_days'] = (
-    (max_date - pd.to_datetime(customer_mart['most_recent_order_at'])).dt.days.fillna(999)
+# Fill NaN values for users with no completed orders
+dim_customers["total_orders"] = dim_customers["total_orders"].fillna(0).astype(int)
+dim_customers["lifetime_value_ltv"] = dim_customers["lifetime_value_ltv"].fillna(0.0).round(2)
+
+# Convert order_date to datetime to calculate Recency
+dim_customers["last_order_date"] = pd.to_datetime(dim_customers["last_order_date"])
+max_date = pd.to_datetime("2026-07-01") # Reference analysis date
+
+dim_customers["recency_days"] = (max_date - dim_customers["last_order_date"]).dt.days
+dim_customers["recency_days"] = dim_customers["recency_days"].fillna(999).astype(int)
+
+# Define Churn: No completed order in the last 180 days OR 0 orders
+dim_customers["is_churned"] = np.where(
+    (dim_customers["recency_days"] > 180) | (dim_customers["total_orders"] == 0), 1, 0
 )
 
-# 8. Define Churn Flag (Inactivity > 180 days)
-customer_mart['is_churned'] = np.where(customer_mart['recency_days'] > 180, 1, 0)
+# Export final Data Mart to CSV for Streamlit & ML Pipeline
+dim_customers.to_csv("dim_customers_mart.csv", index=False)
 
-# 9. Export to CSV for downstream analytics & ML (Julius AI)
-customer_mart.to_csv('dim_customers_mart.csv', index=False)
-print("✅ dim_customers_mart.csv has been successfully generated!")
+print("✅ Data Mart successfully updated: 'dim_customers_mart.csv'")
+print(f"Total Customers Processed: {len(dim_customers)}")
+print(f"Churned Customers Rate: {dim_customers['is_churned'].mean() * 100:.1f}%")
