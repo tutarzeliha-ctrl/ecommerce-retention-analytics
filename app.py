@@ -45,7 +45,7 @@ for index, user in merged_risk.iterrows():
         "username": "RetentionBot",
         "event": "HIGH_CHURN_RISK",
         "data": {
-            "user_id": int(user['user_id']),
+            "user_id": str(user['user_id']),  # Burada int yerine str yaptık!
             "country": str(user['country']),
             "last_order": user['order_date'].strftime('%Y-%m-%d'),
             "action_required": "Trigger 15% Win-back Discount Coupon"
