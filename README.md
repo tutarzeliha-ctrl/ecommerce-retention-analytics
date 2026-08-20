@@ -31,6 +31,8 @@ An end-to-end modern data engineering solution designed to model raw e-commerce 
 
 ---
 
+> Core Value: This project provides an actionable, end-to-end data product that not only uncovers data insights but also facilitates direct business action to minimize customer attrition. For example, by identifying high-churn-risk users and automating alert systems, the marketing team can proactively re-engage these customers, potentially saving the business significant revenue.
+
 ## 🚀 Key Project Features
 
 * **Data Transformations:** Built modular `staging` and `marts` models using **dbt Core** and **Google BigQuery**.
