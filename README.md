@@ -2,7 +2,11 @@ Markdown
 
 # 🛒 E-Commerce Retention & Churn Analytics
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ecommerce-retention-analytics-2eyfdwkwncg2h4tmrpnzfp.streamlit.app/)
+> 📹 **Watch 2-Min Architecture & Demo Video:**  
+> [![Watch the Demo Video](https://img.shields.org/badge/YouTube-Watch%20Demo-red?style=for-the-badge&logo=youtube)](https://youtu.be/rjZkrA3h3XM?si=e85Hxr8ONU2YIKKn)
+
+---
+
 
 ## 🚀 How to Run the Pipeline
 
