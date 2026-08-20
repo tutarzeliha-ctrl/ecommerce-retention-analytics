@@ -2,8 +2,11 @@ Markdown
 
 # 🛒 E-Commerce Retention & Churn Analytics
 
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ecommerce-retention-analytics.streamlit.app/)
+[![YouTube Demo](https://img.shields.org/badge/YouTube-Watch%202--Min%20Demo-red?style=for-the-badge&logo=youtube)](https://youtu.be/rjZkrA3h3XM?si=e85Hxr8ONU2YIKKn)
+
 > 📹 **Watch 2-Min Architecture & Demo Video:**  
-> [![Watch the Demo Video](https://img.shields.org/badge/YouTube-Watch%20Demo-red?style=for-the-badge&logo=youtube)](https://youtu.be/rjZkrA3h3XM?si=e85Hxr8ONU2YIKKn)
+> Click the **YouTube Demo** badge above or [watch it directly on YouTube](https://youtu.be/rjZkrA3h3XM?si=e85Hxr8ONU2YIKKn).
 
 ---
 
