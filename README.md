@@ -5,7 +5,7 @@ Markdown
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ecommerce-retention-analytics.streamlit.app/)
 
 > 📹 **Watch 2-Min Architecture & Demo Video:**  
-> [▶️ Watch Demo on YouTube](https://youtu.be/rjZkrA3h3XM?si=e85Hxr8ONU2YIKKn)
+> [▶️ Watch Demo on YouTube](https://youtu.be/Rz-U4KjB0ys)
 
 ---
 
